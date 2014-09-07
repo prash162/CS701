@@ -23,7 +23,7 @@
 #include <iostream>
 #include <vector>
 using namespace llvm;
-// Temp Version
+// Version 2
 namespace {
   class printCode : public FunctionPass {
     
