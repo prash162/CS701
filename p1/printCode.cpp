@@ -73,25 +73,17 @@ namespace {
 				}
 
 				else{
-					
 					if( V -> hasName()){
 						std::cerr<< V -> getName().str() << " ";
 					}
 					else{
 						std::cerr<<"XXX ";
 					}
-
-
 				}
-		
 			count++;
 			}
-				          	
-
-	
 		std::cerr << "\n"; 
 		}
-
      }
 
 
