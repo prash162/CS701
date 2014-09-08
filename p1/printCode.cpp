@@ -35,11 +35,13 @@ namespace {
 
       		for (Function::iterator B = F->begin(), e = F->end(); B!=e; ++B) {
 	      		for (BasicBlock::iterator j= B->begin(), f= B->end(); j!=f; ++j){
-				insMap.insert( std::pair<Instruction*,int>( (j),insNum));
+				Instruction* Ins = j;
+				insMap.insert( std::pair<Instruction*,int>( Ins,insNum));
 				insNum++;
 			}
 		}       
     }
+
 
     public:
     static char ID; // Pass identification, replacement for typeid
@@ -50,8 +52,7 @@ namespace {
     //**********************************************************************
     virtual bool runOnFunction(Function &F) {
       
-      fillInsMap(&F);   // Fill each Instruction in code with unique instruction ID
-      
+     fillInsMap(&F);   // Fill each Instruction in code with unique instruction ID
       // print fn name
       std::cerr << "FUNCTION " << F.getName().str() << "\n";
 	
@@ -60,26 +61,37 @@ namespace {
 	      std::cerr << "\nBASIC BLOCK " << B->getName().str()<< "\n"; 
 	  	
 	      for (BasicBlock::iterator j= B->begin(), f= B->end(); j!=f; ++j){
-		 std::cerr <<"%"<< insMap[j]<<":\t"<<j->getOpcodeName()<<"\t";    
-          			
-			for(User::op_iterator Op = j->op_begin(), En = j->op_end(); Op!=En; ++Op) {
-				if(isa<Instruction>(Op))
-					std::cerr << "%"<< insMap[(Instruction*)Op];
+		 std::cerr <<"%"<< insMap[(j)]<<":\t"<<j->getOpcodeName()<<"\t";    
+			
+		  unsigned int numOperands = j->getNumOperands();
+		  unsigned int count = 0;
+			while(count<numOperands){
+				Value * V = j -> getOperand(count);
+
+				if(isa<Instruction>(V)){
+					std::cerr << "%" <<insMap[(Instruction*)(V)] << " ";
+				}
 
 				else{
-					if( ((Value*)Op)->hasName()){
-						std::cerr <<  ((Value*)Op)->getName().str() << " ";
+					
+					if( V -> hasName()){
+						std::cerr<< V -> getName().str() << " ";
+					}
+					else{
+						std::cerr<<"XXX ";
 					}
 
-					else {
-						std::cerr << "XXX "; 
-					}
 
-				}			
-	
+				}
+		
+			count++;
 			}
+				          	
+
+	
 		std::cerr << "\n"; 
 		}
+
      }
 
 
