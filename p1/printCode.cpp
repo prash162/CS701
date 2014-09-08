@@ -27,14 +27,17 @@ using namespace llvm;
 namespace {
   class printCode : public FunctionPass {
     private:
-    static int insNum = 1; 
-    std::map<Instruction,int> insMap;
+    static int insNum; 
+    std::map<Instruction*,int> insMap;
    
     private:
     void fillInsMap(Function *F){
-		for (inst_iterator I = inst_begin(F), E = inst_end(F); I !=E; ++I) {
-				insMap.insert( std::pair<Instruction,int>( (&*I),insNum));
+
+      		for (Function::iterator B = F->begin(), e = F->end(); B!=e; ++B) {
+	      		for (BasicBlock::iterator j= B->begin(), f= B->end(); j!=f; ++j){
+				insMap.insert( std::pair<Instruction*,int>( (j),insNum));
 				insNum++;
+			}
 		}       
     }
 
@@ -47,24 +50,25 @@ namespace {
     //**********************************************************************
     virtual bool runOnFunction(Function &F) {
       
-      fillInsMap(F);   // Fill each Instruction in code with unique instruction ID
+      fillInsMap(&F);   // Fill each Instruction in code with unique instruction ID
       
       // print fn name
       std::cerr << "FUNCTION " << F.getName().str() << "\n";
 	
  	//Iterate over Basic Blocks	
       for (Function::iterator B = F.begin(), e = F.end(); B!=e; ++B) {
-	      std::cerr << "\nBASIC BLOCK " << B.getName().str() << "\n"; 
+	      std::cerr << "\nBASIC BLOCK " << B->getName().str()<< "\n"; 
 	  	
-	      for (BasicBlock::iterator j= B->begin(), f= B->end; j!=f; ++j){
-		 std::cerr <<"%"<< insMap[(*j)]<<":\t"<<j->getOpcodeName()<<"\t";    
+	      for (BasicBlock::iterator j= B->begin(), f= B->end(); j!=f; ++j){
+		 std::cerr <<"%"<< insMap[j]<<":\t"<<j->getOpcodeName()<<"\t";    
           			
 			for(User::op_iterator Op = j->op_begin(), En = j->op_end(); Op!=En; ++Op) {
 				if(isa<Instruction>(Op))
-					std::cerr << "%"<< insMap[Op];
+					std::cerr << "%"<< insMap[(Instruction*)Op];
+
 				else{
-					if(Op->hasName()){
-						std::cerr <<  Op -> getName() << " ";
+					if( ((Value*)Op)->hasName()){
+						std::cerr <<  ((Value*)Op)->getName().str() << " ";
 					}
 
 					else {
@@ -74,7 +78,7 @@ namespace {
 				}			
 	
 			}
-		cerr << "\n"; 
+		std::cerr << "\n"; 
 		}
      }
 
@@ -111,6 +115,7 @@ namespace {
     };
 
   };
+  int printCode::insNum =1;
   char printCode::ID = 0;
 
   // register the printCode class: 
