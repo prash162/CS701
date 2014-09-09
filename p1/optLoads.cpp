@@ -31,7 +31,8 @@ namespace {
     private:
     static int insNum;
     std::map<Instruction*,int> insMap;
-  
+    std::vector<Instruction*> loadRemoveList;
+ 
     private:
      void fillInsMap(Function *F){
           for (Function::iterator B = F->begin(), e = F->end(); B!=e; ++B) {
@@ -52,33 +53,30 @@ namespace {
     // runOnFunction
     //**********************************************************************
     virtual bool runOnFunction(Function &F) {
+     bool changeMade = false;
      fillInsMap(&F);
-
      for (Function::iterator B = F.begin(), e = F.end(); B!=e; ++B) {
-	for (BasicBlock::iterator j= B->begin(), f= B->end(); j!=f; ++j){
-		BasicBlock::iterator next ;
-		
-			next = ++j;	
-			j--;
-		
+	for (BasicBlock::iterator j= B->begin(), prev=j++, f= B->end(); j!=f; ++j,++prev){
 
-		const char* curr = j -> getOpcodeName();
-		const char* nxt = next ->getOpcodeName();
-		
-		if((strncmp(curr,"store",5) ==0 ) &&  (strncmp(nxt,"load",4) == 0)){
-			if( j->getOperand(1) == next->getOperand(0)){
-				std::cerr<<"%"<< insMap[next] <<" is a useless load\n";
-				++j;
-			}
-
-		}
-	
+		if( strncmp(prev->getOpcodeName(),"store",5)==0  && strncmp(j->getOpcodeName(),"load",4)==0  ){
+                     if(prev->getOperand(1)==j->getOperand(0)){
+			std::cerr<< "%"<<insMap[j] << " is a useless load\n";
+			j -> replaceAllUsesWith(prev->getOperand(0));
+			loadRemoveList.push_back(j);
+			changeMade = true;
+		    }
+		}	
 	}
-     }
+  }
 
-
-		  
-      return false;  // because we have NOT changed this function
+	if(changeMade == true){
+		for(std::vector<Instruction*>::iterator it=loadRemoveList.begin(); it!=loadRemoveList.end(); ++it){
+			(*it)->eraseFromParent();
+		}
+	      return true;
+	}
+	else		  
+	      return false;  // because we have NOT changed this function
     }
 
     //**********************************************************************
