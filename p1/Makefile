@@ -1,6 +1,6 @@
 DEBUG = ../../Debug/lib
 # add optLoads.o to the following line when ready
-OBJS = printCode.o 
+OBJS = printCode.o optLoads.o
 
 $(DEBUG)/P1.so: $(OBJS)
 	mkdir -p $(DEBUG)
