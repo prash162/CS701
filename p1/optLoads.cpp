@@ -24,14 +24,15 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <list>
 using namespace llvm;
 
 namespace {
   class optLoads : public FunctionPass {
     private:
     static int insNum;
+    static int i;
     std::map<Instruction*,int> insMap;
-    std::vector<Instruction*> loadRemoveList;
  
     private:
      void fillInsMap(Function *F){
@@ -55,9 +56,10 @@ namespace {
     virtual bool runOnFunction(Function &F) {
      bool changeMade = false;
      fillInsMap(&F);
+
+    std::list<Instruction*> loadRemoveList;
      for (Function::iterator B = F.begin(), e = F.end(); B!=e; ++B) {
 	for (BasicBlock::iterator j= B->begin(), prev=j++, f= B->end(); j!=f; ++j,++prev){
-
 		if( strncmp(prev->getOpcodeName(),"store",5)==0  && strncmp(j->getOpcodeName(),"load",4)==0  ){
                      if(prev->getOperand(1)==j->getOperand(0)){
 			std::cerr<< "%"<<insMap[j] << " is a useless load\n";
@@ -69,10 +71,17 @@ namespace {
 	}
   }
 
+	
+	
+	while(!loadRemoveList.empty()){
+		Instruction* rem =  loadRemoveList.front();
+		rem->eraseFromParent(); 
+		loadRemoveList.pop_front();
+	}
+
+
+
 	if(changeMade == true){
-		for(std::vector<Instruction*>::iterator it=loadRemoveList.begin(); it!=loadRemoveList.end(); ++it){
-			(*it)->eraseFromParent();
-		}
 	      return true;
 	}
 	else		  
@@ -101,6 +110,7 @@ namespace {
   };
   int optLoads::insNum=1;
   char optLoads::ID = 0;
+  int optLoads::i = 0;
 
   // register the optLoads class: 
   //  - give it a command-line argument (optLoads)
